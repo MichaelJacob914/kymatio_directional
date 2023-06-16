@@ -182,3 +182,101 @@ def solid_harmonic_3d(M, N, O, sigma, l, fourier=True):
     solid_harm *= norm_factor
 
     return solid_harm
+
+
+def gabor(azimuthal, polar):
+    a = azimuthal
+    p = polar
+    
+    kmax = np.pi/2
+    f = np.sqrt(2)
+    scale = 8
+    orientation = 4
+    delt2 = (2*np.pi)**2
+    
+    
+    k = (kmax)/(f**scale)*np.exp(1j * orientation * np.pi / 8)
+    kn2 = np.abs(k)**2
+    
+    t1 = np.exp(-2*kn2/(delt2 * np.sin(p)**2))
+    t2 = np.exp(2j*np.sin(p)/(1 - np.cos(p)) * (np.real(k)*np.cos(a) - np.imag(k)*np.sin(a)))
+    t3 = np.exp(-(delt2)/2)
+    
+    GABOR = (kn2)/(delt2) * t1 * (t2 - t3)
+    
+    return GABOR
+
+def NEW_solid_harmonic_3d(M, N, O, sigma, l, fourier=True):
+    """
+        Computes a set of 3D Solid Harmonic Wavelets after spherical harmonic convolved with Gabor.
+	A solid harmonic wavelet has two integer orders l >= 0 and -l <= m <= l
+	In spherical coordinates (r, theta, phi), a solid harmonic wavelet is
+	the product of a polynomial Gaussian r^l exp(-0.5 r^2 / sigma^2)
+	with a spherical harmonic function Y_{l,m} (theta, phi).
+
+        Parameters
+        ----------
+        M, N, O : int
+            spatial sizes
+        sigma : float
+            width parameter of the solid harmonic wavelets
+        l : int
+            first integer order of the wavelets
+        fourier : boolean
+            if true, wavelets are computed in Fourier space
+	    if false, wavelets are computed in signal space
+
+        Returns
+        -------
+        solid_harm : ndarray, type complex64
+            numpy array of size (2l+1, M, N, 0) and type complex64 containing
+            the 2l+1 wavelets of order (l , m) with -l <= m <= l.
+            It is ifftshifted such that the origin is at the point [., 0, 0, 0]
+    """
+    NEW_solid_harm = np.zeros((2*l+1, M, N, O), np.complex64)
+    grid = np.fft.ifftshift(
+        np.mgrid[-M // 2:-M // 2 + M,
+                 -N // 2:-N // 2 + N,
+                 -O // 2:-O // 2 + O].astype('float32'),
+        axes=(1,2,3))
+    _sigma = sigma
+
+    if fourier:
+        grid[0] *= 2 * np.pi / M
+        grid[1] *= 2 * np.pi / N
+        grid[2] *= 2 * np.pi / O
+        _sigma = 1. / sigma
+
+    r_square = (grid ** 2).sum(0)
+    r_power_l = sqrt(r_square ** l)
+    gaussian = np.exp(-0.5 * r_square / _sigma ** 2).astype('complex64')
+
+    if l == 0:
+        if fourier:
+            return gaussian.reshape((1, M, N, O))
+        return gaussian.reshape((1, M, N, O)) / (
+                                          (2 * np.pi) ** 1.5 * _sigma ** 3)
+
+    polynomial_gaussian = r_power_l * gaussian / _sigma ** l
+
+    polar, azimuthal = get_3d_angles(grid)
+
+    for i_m, m in enumerate(range(-l, l + 1)):
+        NEW_solid_harm[i_m] = np.convolve(sph_harm(m, l, azimuthal, polar), gabor(azimuthal, polar)) * polynomial_gaussian
+
+    if l % 2 == 0:
+        norm_factor = 1. / (2 * np.pi * np.sqrt(l + 0.5) * 
+                                            double_factorial(l + 1))
+    else :
+        norm_factor = 1. / (2 ** (0.5 * ( l + 3)) * 
+                            np.sqrt(np.pi * (2 * l + 1)) * 
+                            factorial((l + 1) / 2))
+
+    if fourier:
+        norm_factor *= (2 * np.pi) ** 1.5 * (-1j) ** l
+    else:
+        norm_factor /= _sigma ** 3
+
+    NEW_solid_harm *= norm_factor
+
+    return NEW_solid_harm

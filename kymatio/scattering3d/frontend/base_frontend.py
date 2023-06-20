@@ -1,5 +1,5 @@
 from ...frontend.base_frontend import ScatteringBase
-from ..filter_bank import NEW_solid_harmonic_filter_bank, gaussian_filter_bank
+from ..filter_bank import solid_harmonic_filter_bank, gaussian_filter_bank
 
 
 class ScatteringBase3D(ScatteringBase):

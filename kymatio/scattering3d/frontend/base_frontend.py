@@ -1,5 +1,5 @@
 from ...frontend.base_frontend import ScatteringBase
-from ..filter_bank import solid_harmonic_filter_bank, gaussian_filter_bank
+from ..filter_bank import NEW_solid_harmonic_filter_bank, gaussian_filter_bank
 
 
 class ScatteringBase3D(ScatteringBase):
@@ -23,7 +23,7 @@ class ScatteringBase3D(ScatteringBase):
         self.M, self.N, self.O = self.shape
 
     def create_filters(self):
-        self.filters = solid_harmonic_filter_bank(
+        self.filters = NEW_solid_harmonic_filter_bank(
             self.M, self.N, self.O, self.J, self.L, self.sigma_0)
 
         self.gaussian_filters = gaussian_filter_bank(

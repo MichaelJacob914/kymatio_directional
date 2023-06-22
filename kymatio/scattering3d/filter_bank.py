@@ -197,12 +197,44 @@ def gabor(azimuthal, polar):
     
     k = (kmax)/(f**scale)*np.exp(1j * orientation * np.pi / 8)
     kn2 = np.abs(k)**2
+
+    x = np.sin(p)
+    j = 0
+    k = 0
+    l = 0
+    for i in np.sin(p):
+        for z in i:
+            k = 0
+            for h in z:
+                l = 0
+                if h == 0:
+                    x[j][k][l] = 0.0001
+                l += 1
+            k += 1
+        j += 1
+            
+    y = np.cos(p)
+    j = 0
+    k = 0
+    l = 0
+    for i in np.cos(p):
+        for z in i:
+            k = 0
+            for h in z:
+                l = 0
+                if h == 1:
+                    y[j][k][l] = 0.999
+                l += 1
+            k += 1
+        j += 1
+            
     
-    t1 = np.exp(-2*kn2/(delt2 * np.sin(p)**2))
-    t2 = np.exp(2j*np.sin(p)/(1 - np.cos(p)) * (np.real(k)*np.cos(a) - np.imag(k)*np.sin(a)))
+    t1_temp = np.exp(-2*kn2/(delt2 * x**2))
+    t2_temp = np.exp(2j*np.sin(p)/(1 - y) * (np.real(k)*np.cos(a) - np.imag(k)*np.sin(a)))
+
     t3 = np.exp(-(delt2)/2)
     
-    GABOR = (kn2)/(delt2) * t1 * (t2 - t3)
+    GABOR = (kn2)/(delt2) * t1_temp * (t2_temp - t3)
     
     return GABOR
 
